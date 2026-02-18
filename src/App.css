@@ -122,6 +122,7 @@ body {
   letter-spacing: 0.02em;
   position: relative;
   z-index: 1;
+  text-decoration: none; /* 밑줄 제거 */
 }
 
 .hero h1 {
