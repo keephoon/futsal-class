@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
+import { db, collection, addDoc, serverTimestamp } from './firebase'
 
 const INFO = [
   { ico: '📅', lbl: '일시',   val: '3월 4일 (수)\n08:30 – 10:00' },
@@ -19,6 +20,41 @@ const CUR = [
 export default function App() {
   const [done, setDone] = useState(false)
   const progRef = useRef(null)
+
+  const handleSubmit = async (e) => {
+  e.preventDefault()
+  const formData = new FormData(e.target)
+
+  const data = {
+    name:       formData.get('name'),
+    phone:      formData.get('phone'),
+    experience: formData.get('experience'),
+    memo:       formData.get('memo'),
+    createdAt:  new Date().toLocaleString('ko-KR')
+  }
+
+  try {
+    // Firebase 저장
+    await addDoc(collection(db, 'applications'), {
+      ...data,
+      createdAt: serverTimestamp()
+    })
+
+    // Google Sheets 전송
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwNlBwFvCh9-k0nKGmCzGFOOYawhkqcPJS8oIaJRtRXtbnCRT-xNK24FyUUqN6Xq9zlwg/exec'
+    await fetch(SHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+
+    setDone(true)
+  } catch (err) {
+    alert('오류가 발생했어요. 다시 시도해주세요.')
+    console.error(err)
+  }
+}
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -190,18 +226,18 @@ export default function App() {
             <p>곧 연락드릴게요 😊<br />문의는 인스타그램 DM으로 편하게!</p>
           </div>
         ) : (
-          <form className="form-wrap" onSubmit={e => { e.preventDefault(); setDone(true) }}>
+          <form className="form-wrap" onSubmit={handleSubmit}>
             <div className="fg">
               <label>이름 *</label>
-              <input type="text" placeholder="홍길동" required />
+              <input type="text" name="name" placeholder="홍길동" required />
             </div>
             <div className="fg">
               <label>연락처 *</label>
-              <input type="tel" placeholder="010-0000-0000" required />
+              <input type="tel" name="phone" placeholder="010-0000-0000" required />
             </div>
             <div className="fg">
               <label>풋살 경험</label>
-              <select>
+              <select name= "experience">
                 <option>없음 (완전 처음이에요)</option>
                 <option>조금 있음 (몇 번 해봤어요)</option>
                 <option>있음 (정기적으로 해봤어요)</option>
@@ -209,7 +245,7 @@ export default function App() {
             </div>
             <div className="fg">
               <label>문의사항 (선택)</label>
-              <textarea rows={3} placeholder="궁금한 점이 있으면 적어주세요" />
+              <textarea name= "memo" rows={3} placeholder="궁금한 점이 있으면 적어주세요" />
             </div>
             <button type="submit" className="btn-apply">⚽ 신청 완료하기</button>
           </form>
