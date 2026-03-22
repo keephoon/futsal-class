@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 신청 폼 - 누구나 쓰기 가능 (신청자)
+    match /applications/{doc} {
+      allow read, write: if true;
+    }
+
+    // 일정 - 누구나 읽기 가능, 쓰기도 허용 (관리자 비밀번호는 앱에서 체크)
+    match /schedules/{doc} {
+      allow read, write: if true;
+    }
+
+    // 참가자 - 누구나 읽기, 관리자가 생성
+    match /participants/{doc} {
+      allow read, write: if true;
+    }
+
+    // 리포트 - 누구나 읽기, 관리자가 생성
+    match /reports/{doc} {
+      allow read, write: if true;
+    }
+
+    // 기본기 라이브러리
+    match /skill_library/{doc} {
+      allow read, write: if true;
+    }
+
+    // 수업 리캡
+    match /class_recaps/{doc} {
+      allow read, write: if true;
+    }
+
+    // 셀프 트레이닝 기록
+    match /training_logs/{doc} {
+      allow read, write: if true;
+    }
+
+    // 교정 피드백
+    match /correction_feedback/{doc} {
+      allow read, write: if true;
+    }
+
+    // 교정 프리셋
+    match /correction_presets/{doc} {
+      allow read, write: if true;
+    }
+  }
+}

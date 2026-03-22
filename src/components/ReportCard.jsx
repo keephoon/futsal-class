@@ -6,19 +6,24 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Legend
 } from 'recharts'
 
-const DONUT_COLORS = ['#FF5C00', '#FF8A3D', '#FFB347', '#FFD580']
-const LINE_COLORS = ['#FF5C00', '#2196F3', '#4CAF50', '#9C27B0']
+const DONUT_COLORS = ['#FF5C00', '#FF8A3D', '#FF3D00', '#FFB347']
+const LINE_COLORS  = ['#FF5C00', '#38BDF8', '#4ADE80', '#C084FC']
 
 function getYoutubeEmbedUrl(url) {
   if (!url) return null
-  let videoId = null
-  if (url.includes('youtu.be/')) {
-    videoId = url.split('youtu.be/')[1]?.split('?')[0]
-  } else if (url.includes('watch?v=')) {
-    const match = url.split('?')[1]?.match(/v=([^&]+)/)
-    videoId = match ? match[1] : null
+  const trimmed = url.trim()
+  if (!trimmed) return null
+  const patterns = [
+    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?(?:.*&)?v=([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+  ]
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern)
+    if (match) return `https://www.youtube.com/embed/${match[1]}`
   }
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : null
+  return null
 }
 
 // ── 인스타 스토리용 쉐어 카드 (9:16, 오프스크린 렌더링) ──
@@ -163,8 +168,17 @@ function ShareCardElement({ report, participantName, cardRef }) {
   )
 }
 
+const CATEGORY_SECTIONS = {
+  '전체':    ['training', 'skills', 'fitness', 'coach', 'highlight'],
+  '드리블':  ['training'],
+  '볼터치':  ['skills'],
+  '체력':    ['fitness'],
+  '포지셔닝':['skills', 'coach'],
+  '팀플레이':['coach', 'highlight'],
+}
+
 // ── 메인 리포트 카드 ──
-export default function ReportCard({ report, allReports, participantName }) {
+export default function ReportCard({ report, allReports, participantName, activeCategory = '전체' }) {
   const shareCardRef = useRef(null)
   const [sharing, setSharing] = useState(false)
 
@@ -202,6 +216,10 @@ export default function ReportCard({ report, allReports, participantName }) {
   const prevReport = allReports.find(r => r.sessionNumber === sessionNumber - 1)
 
   const embedUrl = getYoutubeEmbedUrl(youtubeUrl)
+  const show = (section) => {
+    const allowed = CATEGORY_SECTIONS[activeCategory] || CATEGORY_SECTIONS['전체']
+    return allowed.includes(section)
+  }
 
   const handleShare = async () => {
     if (!shareCardRef.current || sharing) return
@@ -271,7 +289,7 @@ export default function ReportCard({ report, allReports, participantName }) {
         </div>
 
         {/* ── 훈련 구성 ── */}
-        {pieData.length > 0 && (
+        {show('training') && pieData.length > 0 && (
           <div className="rc-section">
             <div className="rc-section-label">TRAINING</div>
             <h3 className="rc-section-title">훈련 구성</h3>
@@ -305,14 +323,14 @@ export default function ReportCard({ report, allReports, participantName }) {
         )}
 
         {/* ── 스킬 평가 ── */}
-        {radarData.length > 0 && (
+        {show('skills') && radarData.length > 0 && (
           <div className="rc-section">
             <div className="rc-section-label">SKILLS</div>
             <h3 className="rc-section-title">스킬 평가</h3>
             <ResponsiveContainer width="100%" height={240}>
               <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="62%">
-                <PolarGrid gridType="polygon" stroke="#f0f0f0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#999' }} />
+                <PolarGrid gridType="polygon" stroke="rgba(255,255,255,0.1)" />
+                <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#777' }} />
                 <PolarRadiusAxis domain={[0, 5]} tick={false} axisLine={false} />
                 <Radar dataKey="value" stroke="#FF5C00" fill="#FF5C00" fillOpacity={0.25}
                   strokeWidth={2} />
@@ -334,7 +352,7 @@ export default function ReportCard({ report, allReports, participantName }) {
         )}
 
         {/* ── 체력 기록 ── */}
-        <div className="rc-section">
+        {show('fitness') && <div className="rc-section">
           <div className="rc-section-label">FITNESS</div>
           <h3 className="rc-section-title">체력 기록{isMultiSession ? ' 추이' : ''}</h3>
           {!isMultiSession ? (
@@ -353,10 +371,10 @@ export default function ReportCard({ report, allReports, participantName }) {
             <>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={lineData} margin={{ top: 5, right: 16, bottom: 5, left: -14 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#aaa' }} />
-                  <YAxis tick={{ fontSize: 10, fill: '#aaa' }} />
-                  <Tooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#666' }} />
+                  <YAxis tick={{ fontSize: 10, fill: '#666' }} />
+                  <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', color: '#fff' }} />
                   <Legend wrapperStyle={{ fontSize: '10px' }} />
                   {fitnessKeys.map((key, i) => (
                     <Line key={key} type="monotone" dataKey={key}
@@ -383,9 +401,10 @@ export default function ReportCard({ report, allReports, participantName }) {
               )}
             </>
           )}
-        </div>
+        </div>}
 
         {/* ── 강사 코멘트 ── */}
+        {show('coach') && (
         <div className="rc-section">
           <div className="rc-section-label">COACH</div>
           <h3 className="rc-section-title">강사 코멘트</h3>
@@ -394,9 +413,10 @@ export default function ReportCard({ report, allReports, participantName }) {
             <div className="rc-coach-text">{coachComment}</div>
           </div>
         </div>
+        )}
 
         {/* ── 하이라이트 영상 ── */}
-        {embedUrl && (
+        {show('highlight') && embedUrl && (
           <div className="rc-section">
             <div className="rc-section-label">HIGHLIGHT</div>
             <h3 className="rc-section-title">오늘의 하이라이트</h3>

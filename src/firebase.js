@@ -2,7 +2,9 @@ import { initializeApp } from 'firebase/app'
 import { getAnalytics } from 'firebase/analytics'
 import {
   getFirestore, collection, addDoc, serverTimestamp,
-  getDocs, query, where
+  getDocs, getDoc, query, where,
+  onSnapshot, doc, updateDoc, deleteDoc, increment,
+  orderBy, Timestamp, writeBatch, limit
 } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -18,4 +20,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 export const analytics = getAnalytics(app)
 export const db = getFirestore(app)
-export { collection, addDoc, serverTimestamp, getDocs, query, where }
+export {
+  collection, addDoc, serverTimestamp, getDocs, getDoc, query, where,
+  onSnapshot, doc, updateDoc, deleteDoc, increment,
+  orderBy, Timestamp, writeBatch, limit
+}
